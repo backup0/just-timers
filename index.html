@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pomodoro Timer</title>
+  
+	<meta charset="UTF-8">
+  <style>
+    body {font-family: 'Courier New', Courier, monospace;}
+    .less {color:gray;}
+    .desc {font-size:small; color: gray; width: 50%;}
+    #status {font-weight: bolder}
+    #peekTrigger {cursor:default; text-decoration: underline dashed;}
+    #xyz {line-height: 150%;}
+  </style>
+</head>
+
+<body onload="checkNotificationPermission()">
+
+  <h1> Pomodoro Timer</h1>
+
+  <p class="desc">DESC.
+  <br><br>
+  <b>IT IS BEST TO ALLOW NOTIFICATION.</b>
+  </p>
+
+  <p>
+  <button onclick="startPomTimer()">Start/Reset</button>
+  <button onclick="pause()">Pause</button>
+  </p>
+
+  <p id="xyz">
+    <span id="status">Not running</span><br>
+    <span id="crntOp">?</span><br>
+    <!--
+    <span id="completed">0</span>/<span id="started">0</span> [completed/total]<br>
+    -->
+    <span id="peekTrigger" onmouseover="peek()" onmouseout="unPeek()">Hover mouse here to see the amount of time left</span><br>
+    <span id="peekValue"></span>
+  </p>
+
+</code>
+
+<script>
+
+  var pomTime = 5000;
+  var shortBreakTime = 1250;
+  var longBreakTime = 15000;
+  // ---
+  var lenOfCurrentOp = 0;
+  var timeLeftOfOp = 0;
+  // 0x, 1p, 2sb, 3p, 4sb, 5p, 6sb, 7p, 8lb 
+  var op = 0; 
+  var pausedTime = 0;
+  var opStartTime = 0;
+  var timer;
+  var started = false;
+  var notification = null;
+
+  function checkNotificationPermission() {
+    // Let's check if the browser supports notifications
+    if (!('Notification' in window)) {
+      console.log('This browser does not support desktop notification');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      console.log('Notification granted');
+      return;
+    }
+
+    if (Notification.permission !== 'denied' || Notification.permission === 'default') {
+      // request?
+      Notification.requestPermission();
+    }
+  }
+
+  function peek() {
+
+    let inMin;
+
+    if (started) {    
+
+      let remaining;
+      if (pausedTime > 0) {
+        // paused
+        remaining = timeLeftOfOp;
+      }
+      else {
+
+        let elapsed = Date.now() - opStartTime;
+        remaining = lenOfCurrentOp - elapsed;        
+      }
+      let inSec = remaining / 1000;
+      inMin = inSec/60;
+      inMin = '+/- ' + inMin.toFixed(2) + ' minute(s)';
+    }
+    else {
+      inMin = 'NaN';
+    }
+    document.getElementById('peekValue').innerText = ': ' + inMin;
+  } 
+
+  function unPeek() {
+    document.getElementById('peekValue').innerText = '';
+  }
+
+
+  function startPomTimer() {
+
+    if (started) {
+      clear();
+    }
+    else {
+      started = true;
+      document.getElementById('status').innerText = 'Running';
+      startPom();
+    }
+  }
+
+  function pause() {
+
+    if (!started) {
+      return;
+    }
+
+    if (pausedTime > 0) {
+      // unpause
+      unpause();
+    }
+    else {
+      // pause
+      doPause();
+    }  
+  }
+
+  function doPause() {
+
+    window.clearTimeout(timer);
+    pausedTime = Date.now();
+    let elapsed = opStartTime - pausedTime;
+    timeLeftOfOp = lenOfCurrentOp - elapsed;
+    document.getElementById('status').innerText = 'Paused';
+    console.log('Paused');
+  }
+
+  function unpause() {
+
+    console.log('Un-paused');
+    let elapsed = pausedTime - opStartTime;
+    opStartTime = Date.now();
+    pausedTime = 0;
+    timeLeftOfOp = 0;
+    let timeLeft = lenOfCurrentOp - elapsed;
+
+    switch (op) {
+      // poms
+      case 1:
+      case 3:
+      case 5:
+        timer = setTimeout(startShortBreak, timeLeft);
+        break;
+      case 7:
+        timer = setTimeout(startLongBreak, timeLeft);
+        break;
+      // sb
+      case 2:
+      case 4:
+      case 6:
+        timer = setTimeout(startPom, timeLeft);
+        break;
+      // long break
+      case 8:
+        timer = setTimeout(endSession, timeLeft);
+        break;
+      default:
+        break;
+    }
+    document.getElementById('status').innerText = 'Running';
+  }
+
+  function startPom() {
+    op++;
+    console.log('Work ' + op);
+    document.getElementById('crntOp').innerText = 'Work';
+    opStartTime = Date.now();
+    lenOfCurrentOp = pomTime;
+    notify('Start WORKING.');
+    if (op === 7) {
+      // 7 = last pom, next one is a long break.
+      timer = setTimeout(startLongBreak, pomTime);
+    }
+    else {
+      timer = setTimeout(startShortBreak, pomTime);
+    }
+  }
+
+  function startShortBreak() {
+    op++;
+    console.log('Short break ' + op);
+    document.getElementById('crntOp').innerText = 'Short break';
+    opStartTime = Date.now();
+    lenOfCurrentOp = shortBreakTime;
+    notify('Take a SHORT BREAK (5 minutes).');
+    timer = setTimeout(startPom, shortBreakTime);
+  }
+
+  function startLongBreak() {
+    op++;
+    console.log('Long break');
+    document.getElementById('crntOp').innerText = 'Long break';
+    opStartTime = Date.now();
+    lenOfCurrentOp = longBreakTime;
+    notify('Take a LONG BREAK (30 minutes).');
+    timer = setTimeout(endSession, longBreakTime);
+  } 
+
+  function endSession() {
+    console.log('Session done');
+    notify('Session\'s done.');
+    clear();
+  }
+
+  function clear() {
+
+    window.clearTimeout(timer);
+    started = false;
+    lenOfCurrentOp = 0;
+    timeLeftOfOp = 0;
+    pausedTime = 0;
+    opStartTime = 0;
+    timer = null;
+    if (notification !== null) {
+      notification.close();
+    }
+    notification = null;
+    op = 0;
+    document.getElementById('status').innerText = 'Not running';
+    document.getElementById('crntOp').innerText = '?';
+  }
+
+  function notify(txt) {
+    if (Notification.permission !== 'granted') {
+      return;
+    }
+
+    try {
+      notification.close();
+    }
+    catch(err) {
+    }
+
+    let ico = '/chronometer-5174.png';
+    notification = new Notification('Pomodoro timer', { body: txt, icon: ico});
+  }
+
+</script>
+</body>
+</html>
