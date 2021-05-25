@@ -106,12 +106,17 @@
 
   function startPomTimer() {
 
+    if (notification !== null) {
+      notification.close();
+    }
+    notification = null;
+
     if (started) {
       clear();
     }
     else {
 	
-	  checkNotificationPermission();
+	    checkNotificationPermission();
 	
       started = true;
       document.getElementById('status').innerText = 'Running';
@@ -231,10 +236,6 @@
     pausedTime = 0;
     opStartTime = 0;
     timer = null;
-    if (notification !== null) {
-      notification.close();
-    }
-    notification = null;
     op = 0;
     document.getElementById('status').innerText = 'Not running';
     document.getElementById('crntOp').innerText = '?';
