@@ -33,6 +33,7 @@
   <p id="xyz">
     <span id="status">Not running</span><br>
     <span id="crntOp">?</span><br>
+	Work done: <span id="counter">0</span>/4<br><br>
     <!--
     <span id="completed">0</span>/<span id="started">0</span> [completed/total]<br>
     -->
@@ -55,6 +56,7 @@
   var timer;
   var started = false;
   var notification = null;
+  var counter = 0;
 
   function checkNotificationPermission() {
     // Let's check if the browser supports notifications
@@ -117,7 +119,7 @@
     }
     else {
 	
-	    checkNotificationPermission();
+	  checkNotificationPermission();
 	
       started = true;
       document.getElementById('status').innerText = 'Running';
@@ -190,6 +192,7 @@
     op++;
     console.log('Work ' + op);
     document.getElementById('crntOp').innerText = 'Work';
+	document.getElementById('counter').innerText = ++counter;
     opStartTime = Date.now();
     lenOfCurrentOp = pomTime;
     notify('Start WORKING.');
@@ -238,8 +241,10 @@
     opStartTime = 0;
     timer = null;
     op = 0;
+	counter = 0;
     document.getElementById('status').innerText = 'Not running';
     document.getElementById('crntOp').innerText = '?';
+	document.getElementById('counter').innerText = counter;
   }
 
   function notify(txt) {
