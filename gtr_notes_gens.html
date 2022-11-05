@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>QTR notes generator</title>
+
+<meta charset="UTF-8">
+
+  <style>
+    body {font-family: 'Courier New', Courier, monospace;}
+    .less {color:gray;}
+    .desc {width: 50%;}
+    #status {font-weight: bolder}
+    #peekTrigger {cursor:default}
+    #xyz {line-height: 150%;}
+  </style>
+
+<script type="text/javascript">
+
+	function generate() {
+	
+		var string_min = parseInt(document.getElementById("s_start").value);
+		var string_max = parseInt(document.getElementById("s_end").value);
+		
+		if (string_min > string_max) {
+			return;
+		}
+		
+		
+		var fret_min = parseInt(document.getElementById("f_start").value);
+		var fret_max = parseInt(document.getElementById("f_end").value);
+		
+		if (fret_min > fret_max) {
+			return;
+		}
+		
+		var xx = [];
+		for (x = 0; x <= document.getElementById("nom").value; x++) {
+		  xx.push(" " + getRndInteger(string_min, string_max) + "(" + getRndInteger(fret_min, fret_max) + ")");	
+		}
+		
+		document.getElementById("result").innerHTML = xx;
+	
+	}
+	
+	function getRndInteger(min, max) {
+	
+		var val = Math.round((Math.random() * (max - min + 1)) + min);
+		if (val > max) {
+			return max;
+		}
+		
+		if (val < min) {
+			return min;
+		}
+		
+		return val;		
+	}
+
+</script>
+
+</head>
+<body>
+
+<h1> Random Guitar Note Generator</h1>
+
+<p>
+	<b>String range; </b><br>
+	min <input type="number" id="s_start" value="1" min="0" max="20"> max <input type="number" id="s_end" value="6" min="0" max="20">
+</p>
+
+<p>
+	<b>Fret range; </b><br>
+	min <input type="number" id="f_start" value="0" min="0" max="50"> max <input type="number" id="f_end" value="12" min="0" max="50">
+</p>
+
+<p>
+	<b>Number of notes; </b><br>
+	# <input type="number" id="nom" value="10" min="1" max="100">
+</p>
+
+<p>
+	<br>
+	<input type="button" onclick="generate()" value="Generate">
+	<br><br>
+</p>
+
+<p id="result"></p> 
+
+</body>
+</html>
+
+
