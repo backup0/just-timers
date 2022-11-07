@@ -4,42 +4,42 @@
   <title>Pomodoro Timer</title>
   
 	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 	<link rel="shortcut icon" type="image/png" href="frve.png">
-  <style>
-    body {font-family: 'Courier New', Courier, monospace;}
-    .less {color:gray;}
-    .desc {width: 50%;}
-    #status {font-weight: bolder}
-    #peekTrigger {cursor:default}
-    #xyz {line-height: 150%;}
-  </style>
+	
 </head>
 
 <body>
 
+ <div class="w3-container">
   <h1> Pomodoro Timer</h1>
 
   <p class="desc">
-  Lightweight pomodoro timer. 25 minutes work (x4), 5 minutes short break (x3), 30 minutes long break (x1).
-  <br><br>
-  <b>IT IS BEST TO ALLOW NOTIFICATION.</b>
+  <span style="font-size: large">Lightweight pomodoro timer.</span>
+  <br>25 minutes work (x4), 5 minutes short break (x3), 30 minutes long break (x1)
   </p>
+  
+  <h3>IT IS BEST TO ALLOW NOTIFICATION.</h3>
+  
+  </div>
 
-  <p>
-  <button onclick="startPomTimer()">Start/Reset</button>
-  <button onclick="pause()">Pause</button>
-  </p>
+ <div class="w3-container w3-light-gray">
+	  <p>
+	  <button class="w3-button w3-red" onclick="startPomTimer()">Start/Reset</button>
+	  <button class="w3-button w3-red" onclick="pause()">Pause</button>
+	  </p>
 
-  <p id="xyz">
-    <span id="status">Not running</span><br>
-    <span id="crntOp">?</span><br>
-	Work done: <span id="counter">0</span>/4<br><br>
-    <!--
-    <span id="completed">0</span>/<span id="started">0</span> [completed/total]<br>
-    -->
-    <span id="peekTrigger" onmouseover="peek()" onmouseout="unPeek()">Hover mouse here to see the amount of time left</span><br>
-    <span id="peekValue"></span>
-  </p>
+	  <p id="xyz">
+		<span id="status">Not running</span><br>
+		<span id="crntOp">?</span><br>
+		Work done: <span id="counter">0</span>/4<br><br>
+		<!--
+		<span id="completed">0</span>/<span id="started">0</span> [completed/total]<br>
+		-->
+		<span id="peekTrigger" onmouseover="peek()" onmouseout="unPeek()">Hover mouse here to see the amount of time left</span><br>
+		<span id="peekValue"></span>
+	  </p>
+  </div>
 	
 <script>
 
