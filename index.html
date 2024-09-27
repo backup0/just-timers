@@ -26,7 +26,7 @@
  <div class="w3-container w3-light-gray">
 	  <p>
 	  <button class="w3-button w3-red" onclick="startPomTimer()">Start/Reset</button>
-	  <button class="w3-button w3-red" id="pauseButton" onclick="pause()">Pause</button>
+	  <button class="w3-button w3-red" onclick="pause()">Pause</button>
 	  </p>
 
 	  <p id="xyz">
@@ -36,7 +36,8 @@
 		<!--
 		<span id="completed">0</span>/<span id="started">0</span> [completed/total]<br>
 		-->
-		Time remaining: <span id="peekValue">--</span>
+		<span id="peekTrigger" onmouseover="peek()" onmouseout="unPeek()">Hover mouse here to see the amount of time left</span><br>
+		<span id="peekValue"></span>
 	  </p>
   </div>
 	
@@ -46,7 +47,8 @@
   var shortBreakTime = 300000; //1250;
   var longBreakTime = 1800000; //15000;
   // ---
-  var UPDATE_INTERVAL = 60000;//15000;
+  var lenOfCurrentOp = 0;
+  var timeLeftOfOp = 0;
   // 0x, 1p, 2sb, 3p, 4sb, 5p, 6sb, 7p, 8lb 
   var op = 0; 
   var pausedTime = 0;
@@ -73,6 +75,37 @@
       Notification.requestPermission();
     }
   }
+
+  function peek() {
+
+    let inMin;
+
+    if (started) {    
+
+      let remaining;
+      if (pausedTime > 0) {
+        // paused
+        remaining = timeLeftOfOp;
+      }
+      else {
+
+        let elapsed = Date.now() - opStartTime;
+        remaining = lenOfCurrentOp - elapsed;        
+      }
+      let inSec = remaining / 1000;
+      inMin = inSec/60;
+      inMin = '+/- ' + inMin.toFixed(2) + ' minute(s)';
+    }
+    else {
+      inMin = 'NaN';
+    }
+    document.getElementById('peekValue').innerText = ': ' + inMin;
+  } 
+
+  function unPeek() {
+    document.getElementById('peekValue').innerText = '';
+  }
+
 
   function startPomTimer() {
 
@@ -114,147 +147,86 @@
 
     window.clearTimeout(timer);
     pausedTime = Date.now();
+    let elapsed = opStartTime - pausedTime;
+    timeLeftOfOp = lenOfCurrentOp - elapsed;
     document.getElementById('status').innerText = 'Paused';
-    document.getElementById('pauseButton').innerHTML = 'Resume';
+    console.log('Paused');
   }
 
   function unpause() {
 
-    //let elapsed = pausedTime - opStartTime;
-    let elapsed = pausedTime - timeStart;
-    //pausedTime = 0;
+    console.log('Un-paused');
+    let elapsed = pausedTime - opStartTime;
+    opStartTime = Date.now();
+    pausedTime = 0;
+    timeLeftOfOp = 0;
+    let timeLeft = lenOfCurrentOp - elapsed;
 
     switch (op) {
       // poms
       case 1:
       case 3:
       case 5:
+        timer = setTimeout(startShortBreak, timeLeft);
+        break;
       case 7:
-        //timer = setTimeout(startShortBreak, timeLeft);
-        //a1(5000 - elapsed);
-        pomChunk(UPDATE_INTERVAL - elapsed);
-        //break;
-        //case 7:
-        //timer = setTimeout(startLongBreak, timeLeft);
+        timer = setTimeout(startLongBreak, timeLeft);
         break;
       // sb
       case 2:
       case 4:
       case 6:
-        shortBreakChunk(UPDATE_INTERVAL - elapsed);
+        timer = setTimeout(startPom, timeLeft);
         break;
       // long break
       case 8:
-        //timer = setTimeout(endSession, timeLeft);
-        longBreakChunk(UPDATE_INTERVAL - elapsed);
+        timer = setTimeout(endSession, timeLeft);
         break;
       default:
         break;
     }
     document.getElementById('status').innerText = 'Running';
-    document.getElementById('pauseButton').innerHTML = 'Pause';
   }
 
-  var timeStart = 0;
-
-  var pomTimeLeft = 0;
   function startPom() {
     op++;
+    console.log('Work ' + op);
     document.getElementById('crntOp').innerText = 'Work';
-	  document.getElementById('counter').innerText = ++counter;
-    pomTimeLeft = pomTime;
+	document.getElementById('counter').innerText = ++counter;
+    opStartTime = Date.now();
+    lenOfCurrentOp = pomTime;
     notify('Start WORKING.');
-    pomChunk(1);
+    if (op === 7) {
+      // 7 = last pom, next one is a long break.
+      timer = setTimeout(startLongBreak, pomTime);
+    }
+    else {
+      timer = setTimeout(startShortBreak, pomTime);
+    }
   }
 
-  function pomChunk(timeOut) {
-
-    document.getElementById('peekValue').innerText = convertToMinute(pomTimeLeft);
-
-    if (pausedTime >= 0) {
-      timeOut = UPDATE_INTERVAL;
-    }
-    pausedTime = 0;
-
-    if (pomTimeLeft <= 0) {
-
-      if (op === 7) {
-        startLongBreak();
-      }
-      else {
-        startShortBreak();
-      }
-      return;
-    }
-
-    timeStart = Date.now();
-    timer = setTimeout(function () {
-      pomTimeLeft = pomTimeLeft - timeOut;
-        pomChunk(timeOut);
-      }, timeOut);
-  }
-
-  var shortBreakTimeLeft = 0;
   function startShortBreak() {
     op++;
+    console.log('Short break ' + op);
     document.getElementById('crntOp').innerText = 'Short break';
-    shortBreakTimeLeft = shortBreakTime;
+    opStartTime = Date.now();
+    lenOfCurrentOp = shortBreakTime;
     notify('Take a SHORT BREAK (5 minutes).');
-    shortBreakChunk(1);
+    timer = setTimeout(startPom, shortBreakTime);
   }
 
-  function shortBreakChunk(timeOut) {
-
-    document.getElementById('peekValue').innerText = convertToMinute(shortBreakTimeLeft);
-    
-    if (pausedTime >= 0) {
-      timeOut = UPDATE_INTERVAL;
-    }
-    pausedTime = 0;
-
-    if (shortBreakTimeLeft <= 0) {
-      startPom();
-      return;
-    }
-
-    timeStart = Date.now();
-    timer = setTimeout(function () {
-      shortBreakTimeLeft = shortBreakTimeLeft - timeOut;
-        shortBreakChunk(timeOut);
-      }, timeOut);
-  }
-
-  var longBreakTimeLeft = 0;
   function startLongBreak() {
     op++;
+    console.log('Long break');
     document.getElementById('crntOp').innerText = 'Long break';
-    longBreakTimeLeft = longBreakTime;
+    opStartTime = Date.now();
+    lenOfCurrentOp = longBreakTime;
     notify('Take a LONG BREAK (30 minutes).');
-    longBreakChunk(1);
+    timer = setTimeout(endSession, longBreakTime);
   } 
 
-  function longBreakChunk(timeOut) {
-
-    document.getElementById('peekValue').innerText = convertToMinute(longBreakTimeLeft);
-
-    if (pausedTime >= 0) {
-      timeOut = UPDATE_INTERVAL;
-    }
-    pausedTime = 0;
-    
-    if (longBreakTimeLeft <= 0) {
-      endSession();
-      return;
-    }
-
-    timeStart = Date.now();
-    timer = setTimeout(function () {
-      longBreakTimeLeft = longBreakTimeLeft - timeOut;
-        longBreakChunk(timeOut);
-      }, timeOut);
-  }
-
   function endSession() {
+    console.log('Session done');
     notify('Session\'s done.');
     clear();
   }
@@ -263,21 +235,16 @@
 
     window.clearTimeout(timer);
     started = false;
+    lenOfCurrentOp = 0;
+    timeLeftOfOp = 0;
     pausedTime = 0;
+    opStartTime = 0;
     timer = null;
     op = 0;
-	  counter = 0;
+	counter = 0;
     document.getElementById('status').innerText = 'Not running';
     document.getElementById('crntOp').innerText = '?';
-	  document.getElementById('counter').innerText = counter;
-  }
-
-  function convertToMinute(time) {
-
-    let inSec = time/1000;
-    let inMin = inSec/60;
-    inMin = '+/- ' + inMin.toFixed(2) + ' minute(s)';
-    return inMin;
+	document.getElementById('counter').innerText = counter;
   }
 
   function notify(txt) {
